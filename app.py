@@ -2,6 +2,7 @@ from flask import Flask, render_template, Response
 import cv2
 from ultralytics import YOLO
 import argparse
+import supervision as sv
 
 model = YOLO("yolov8n.pt")
 
@@ -24,14 +25,25 @@ frame_width, frame_height = args.webcam_resolution
 
 camera=cv2.VideoCapture(0)
 camera.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
-# camera.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
 
+box_annotator = sv.BoxAnnotator(
+    # color= 'Blue',
+    thickness=2,
+),
 
 
 def generate_frames():
     while True:
-        success, frame=camera.read()
-        if not success:
+        ret, frame=camera.read()
+        result = model(frame)[0]
+        detections = sv.Detections.from_ultralytics(result)
+
+        frame = box_annotator.annotate(scene=frame, detections=detections)
+
+        cv2.imshow('yolov8', frame)
+
+        if not ret:
             break
         else:
             ret, buffer=cv2.imencode('.jpg', frame)
