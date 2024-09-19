@@ -4,6 +4,7 @@ from ultralytics import YOLO
 import argparse
 import supervision as sv
 
+
 model = YOLO("yolov8n.pt")
 
 # Function on the video frame
@@ -18,33 +19,20 @@ def parse_arguments() -> argparse.Namespace:
     args = parser.parse_args()
     return args
 
-# Main function
-app=Flask(__name__)
-args = parse_arguments()
-frame_width, frame_height = args.webcam_resolution
-
-camera=cv2.VideoCapture(0)
-if not camera.isOpened():
-    print("Error: Could not open video.")
-    exit()
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
-
-
-
-
 def generate_frames():
     while True:
         ret, frame=camera.read()
         result = model(frame)[0]
         detections = sv.Detections.from_ultralytics(result)
+
         box_annotator = sv.BoxAnnotator(
             thickness=1,
         )
         frame = box_annotator.annotate(
             scene=frame,
-            detections=detections
+            detections=detections,
         )
+        
         #cv2.imshow('yolov8', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -58,6 +46,18 @@ def generate_frames():
         
         yield(b'--frame\r\n'
               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+# Main function
+app = Flask(__name__)
+args = parse_arguments()
+frame_width, frame_height = args.webcam_resolution
+
+camera = cv2.VideoCapture(0)
+if not camera.isOpened():
+    print("Error: Could not open video.")
+    exit()
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
 
 
 
