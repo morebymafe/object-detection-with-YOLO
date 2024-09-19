@@ -11,7 +11,7 @@ def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='YOLO Live')
     parser.add_argument(
         "--webcam-resolution",
-        default=[1200, 720],
+        default=[1280, 720],
         nargs=2,
         type=int
     )
@@ -24,13 +24,13 @@ args = parse_arguments()
 frame_width, frame_height = args.webcam_resolution
 
 camera=cv2.VideoCapture(0)
+if not camera.isOpened():
+    print("Error: Could not open video.")
+    exit()
 camera.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
 camera.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
 
-box_annotator = sv.BoxAnnotator(
-    # color= 'Blue',
-    thickness=2,
-),
+
 
 
 def generate_frames():
@@ -38,10 +38,17 @@ def generate_frames():
         ret, frame=camera.read()
         result = model(frame)[0]
         detections = sv.Detections.from_ultralytics(result)
+        box_annotator = sv.BoxAnnotator(
+            thickness=1,
+        )
+        frame = box_annotator.annotate(
+            scene=frame,
+            detections=detections
+        )
+        #cv2.imshow('yolov8', frame)
 
-        frame = box_annotator.annotate(scene=frame, detections=detections)
-
-        cv2.imshow('yolov8', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
         if not ret:
             break
