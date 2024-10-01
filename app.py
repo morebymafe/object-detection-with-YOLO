@@ -26,10 +26,15 @@ def generate_frames():
         detections = sv.Detections.from_ultralytics(result)
 
         box_annotator = sv.BoxAnnotator(
-            thickness=1,
+            thickness=2,
         )
         frame = box_annotator.annotate(
-            scene=frame,
+            scene=frame.copy(),
+            detections=detections,
+        )
+        label_annotator = sv.LabelAnnotator()
+        frame = label_annotator.annotate(
+            scene=frame.copy(),
             detections=detections,
         )
         
