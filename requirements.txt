@@ -1,4 +1,4 @@
 flask
-open_cv
+opencv-python
 argparse
 supervision
